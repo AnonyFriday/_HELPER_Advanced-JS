@@ -45,9 +45,9 @@ const btnScrollTo = document.querySelector('.btn--scroll-to');
 const section1 = document.querySelector('#section--1');
 
 btnScrollTo.addEventListener('click', function (event) {
-  const secction1Coords = section1.getBoundingClientRect();
+  const section1Coords = section1.getBoundingClientRect();
 
-  console.log('Section', secction1Coords);
+  console.log('Section', section1Coords);
 
   console.log('BTN', event.target.getBoundingClientRect());
 
@@ -62,8 +62,8 @@ btnScrollTo.addEventListener('click', function (event) {
   // - section1Coords.top: from the top most of the viewport
   // - distance from the section to the top most of the scrollbar = top of section + current scrollY
   window.scrollTo({
-    top: secction1Coords.top + window.scrollY,
-    left: secction1Coords.left + window.scrollX,
+    top: section1Coords.top + window.scrollY,
+    left: section1Coords.left + window.scrollX,
     behavior: 'smooth',
   });
 
@@ -205,11 +205,11 @@ nav.addEventListener('mouseout', handleHover.bind(1));
 // - Observe the header(target) correspond with viewport
 const header = document.querySelector('.header');
 const navHeight = nav.getBoundingClientRect().height;
-const obsCallback = function (entries, observer) {
+const obsHeaderCallback = function (entries, observer) {
   const headerEntry = entries[0]; // cuz only 1 observer
 
-  console.log(headerEntry); // infor of entry
-  console.log(observer); // infor of observer
+  // console.log(headerEntry); // infor of entry
+  // console.log(observer); // infor of observer
 
   if (!headerEntry.isIntersecting) {
     nav.classList.add('sticky');
@@ -218,13 +218,44 @@ const obsCallback = function (entries, observer) {
   }
 };
 
-let viewportObserver = new IntersectionObserver(obsCallback, {
+let viewportHeaderObserver = new IntersectionObserver(obsHeaderCallback, {
   root: null,
   threshold: [0.7], // in range of 0 to 1, the intersection mark of the target with viewport
   rootMargin: `${-navHeight}px 0px 0px 0px`, // expand the viewport to navHeight px
 });
-viewportObserver.observe(header);
+viewportHeaderObserver.observe(header);
 
 ////////////////////////////////////////////////////////
-// Reviewing Sections using Intersection Observable API
+// Revealing Sections using Intersection Observer API
 ////////////////////////////////////////////////////////
+
+// Using Intersection Observer API
+// - reveal section on ratio of 15%
+// - hidden section when ratio < 15%
+// - when reveal all sections, unobserve sections to avoid calling callbacks
+const sections = document.querySelectorAll('.section');
+
+const obsSectionCallback = function (entries, observer) {
+  const [entry] = entries;
+  console.log(entries);
+
+  // handle the initial state when isIntersecting = false
+  if (!entry.isIntersecting) return;
+
+  // when the isIntersectiong = true (hitting the first threshold)
+  entry.target.classList.remove('section--hidden');
+
+  // after hitting the first threshold, unobserve the element
+  // to avoid invoking callback (improve performance)
+  observer.unobserve(entry.target);
+};
+
+const viewportSectionsObserver = new IntersectionObserver(obsSectionCallback, {
+  root: null,
+  threshold: [0.15],
+});
+
+sections.forEach(section => {
+  viewportSectionsObserver.observe(section);
+  section.classList.add('section--hidden'); // all will be hidden by default
+});
