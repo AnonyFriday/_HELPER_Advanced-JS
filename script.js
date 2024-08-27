@@ -206,7 +206,9 @@ nav.addEventListener('mouseout', handleHover.bind(1));
 const header = document.querySelector('.header');
 const navHeight = nav.getBoundingClientRect().height;
 const obsHeaderCallback = function (entries, observer) {
-  const headerEntry = entries[0]; // cuz only 1 observer
+  // initial state: all entries
+  // when reaching threshold, only 1 entry
+  const headerEntry = entries[0];
 
   // console.log(headerEntry); // infor of entry
   // console.log(observer); // infor of observer
@@ -237,7 +239,6 @@ const sections = document.querySelectorAll('.section');
 
 const obsSectionCallback = function (entries, observer) {
   const [entry] = entries;
-  console.log(entries);
 
   // handle the initial state when isIntersecting = false
   if (!entry.isIntersecting) return;
@@ -258,4 +259,41 @@ const viewportSectionsObserver = new IntersectionObserver(obsSectionCallback, {
 sections.forEach(section => {
   viewportSectionsObserver.observe(section);
   section.classList.add('section--hidden'); // all will be hidden by default
+});
+
+////////////////////////////////////////////////////////
+// Lazy-Loading Images
+////////////////////////////////////////////////////////
+
+// Performant-critical on Lazy Loading Images
+// - set src to the lightweight img's src by default (add some blur with css)
+// - when reaching the threshold, set src with high-resolution image
+// - addEventListener('load') to load the high-res image, then remove blur after finishing loading
+
+const imgTargets = document.querySelectorAll('img[data-src]');
+
+const obsLazyLoadingCallback = function (entries, observer) {
+  const [entry] = entries;
+
+  // If not reaching the entry and initial state
+  if (!entry.isIntersecting) return;
+
+  // Assign the data-src to the src
+  entry.target.src = entry.target.dataset.src;
+
+  entry.target.addEventListener('load', function (e) {
+    entry.target.classList.remove('lazy-img');
+  });
+};
+
+const viewportImagesObserver = new IntersectionObserver(
+  obsLazyLoadingCallback,
+  {
+    root: null,
+    threshold: [0],
+  }
+);
+
+imgTargets.forEach(img => {
+  viewportImagesObserver.observe(img);
 });
